@@ -11,14 +11,13 @@ import JsonForm from 'app/views/settings/components/forms/jsonForm';
 import withApi from 'app/utils/withApi';
 import withConfig from 'app/utils/withConfig';
 
-import TriggersChart from './chart';
-
 import {
   AlertRuleThreshold,
   AlertRuleThresholdType,
   IncidentRule,
   Trigger,
 } from '../types';
+import TriggersChart from './chart';
 
 type AlertRuleThresholdKey = {
   [AlertRuleThreshold.INCIDENT]: 'alertThreshold';
@@ -208,11 +207,12 @@ class TriggerForm extends React.Component<Props, State> {
               config={config}
               organization={organization}
               projects={projects}
-              rule={rule}
               isInverted={isInverted}
               alertThreshold={alertThreshold}
               resolveThreshold={resolveThreshold}
+              query={rule.query}
               timeWindow={rule.timeWindow}
+              aggregations={rule.aggregations}
               onChangeIncidentThreshold={this.handleChangeIncidentThreshold}
               onChangeResolutionThreshold={this.handleChangeResolutionThreshold}
             />

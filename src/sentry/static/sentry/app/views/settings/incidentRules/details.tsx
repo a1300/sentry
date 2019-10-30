@@ -20,7 +20,6 @@ import withProjects from 'app/utils/withProjects';
 
 type RouteParams = {
   orgId: string;
-  projectId: string;
   incidentRuleId: string;
 };
 
@@ -144,18 +143,12 @@ class IncidentRulesDetails extends AsyncView<
   };
 
   renderBody() {
-    const {orgId, projectId, incidentRuleId} = this.props.params;
+    const {orgId, incidentRuleId} = this.props.params;
     const {rule} = this.state;
 
     return (
       <React.Fragment>
-        <RuleForm
-          saveOnBlur
-          projectId={projectId}
-          orgId={orgId}
-          incidentRuleId={incidentRuleId}
-          initialData={rule}
-        />
+        <RuleForm orgId={orgId} incidentRuleId={incidentRuleId} initialData={rule} />
 
         <TriggersHeader
           title={t('Triggers')}

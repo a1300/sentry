@@ -23,15 +23,9 @@ class IncidentRulesCreate extends React.Component<
   };
 
   render() {
-    const {orgId, projectId} = this.props.params;
+    const {orgId} = this.props.params;
 
-    return (
-      <RuleForm
-        orgId={orgId}
-        projectId={projectId}
-        onSubmitSuccess={this.handleSubmitSuccess}
-      />
-    );
+    return <RuleForm orgId={orgId} onSubmitSuccess={this.handleSubmitSuccess} />;
   }
 }
 export default IncidentRulesCreate;

@@ -1,3 +1,5 @@
+import FormModel from 'app/views/settings/components/forms/model';
+
 import {debounce} from 'lodash';
 import PropTypes from 'prop-types';
 import React from 'react';
@@ -15,6 +17,7 @@ import {
   AlertRuleThreshold,
   AlertRuleThresholdType,
   IncidentRule,
+  UnsavedTrigger,
   Trigger,
 } from '../types';
 import TriggersChart from './chart';
@@ -266,30 +269,31 @@ class TriggerForm extends React.Component<Props, State> {
 }
 
 type TriggerFormContainerProps = {
-  orgId: string;
-} & React.ComponentProps<typeof TriggerForm> & {
-    onSubmitSuccess?: Form['props']['onSubmitSuccess'];
-  };
+  onSave: (trigger: UnsavedTrigger) => void;
+} & React.ComponentProps<typeof TriggerForm>;
 
 function TriggerFormContainer({
-  orgId,
-  onSubmitSuccess,
   rule,
   trigger,
+  onSave,
   ...props
 }: TriggerFormContainerProps) {
+  const handleSubmit = (data, _onSuccess, _onError, _e, model: FormModel) => {
+    if (!model.validateForm()) {
+      return;
+    }
+
+    onSave(data as Trigger);
+  };
+
   return (
     <Form
-      apiMethod={trigger ? 'PUT' : 'POST'}
-      apiEndpoint={`/organizations/${orgId}/alert-rules/${rule.id}/triggers/${
-        trigger ? `${trigger.id}/` : ''
-      }`}
       initialData={{
         thresholdType: AlertRuleThresholdType.ABOVE,
         ...trigger,
       }}
       saveOnBlur={false}
-      onSubmitSuccess={onSubmitSuccess}
+      onSubmit={handleSubmit}
       submitLabel={trigger ? t('Update Trigger') : t('Create Trigger')}
     >
       <TriggerForm rule={rule} trigger={trigger} {...props} />

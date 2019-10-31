@@ -1,37 +1,20 @@
 import React from 'react';
-import {Observer} from 'mobx-react';
 
 import {Client} from 'app/api';
-import {Config, Organization, Project} from 'app/types';
+import {Config, Organization} from 'app/types';
 import {t} from 'app/locale';
-import Form from 'app/views/settings/components/forms/form';
 import FormField from 'app/views/settings/components/forms/formField';
-import FormModel from 'app/views/settings/components/forms/model';
 import JsonForm from 'app/views/settings/components/forms/jsonForm';
 import SearchBar from 'app/views/events/searchBar';
-import SentryTypes from 'app/sentryTypes';
-import TriggersChart from 'app/views/settings/incidentRules/triggers/chart';
-import withApi from 'app/utils/withApi';
-import withConfig from 'app/utils/withConfig';
-import withOrganization from 'app/utils/withOrganization';
 
-import {AlertRuleAggregations, IncidentRule, TimeWindow} from './types';
-import getMetricDisplayName from './utils/getMetricDisplayName';
-
-const DEFAULT_METRIC = [AlertRuleAggregations.TOTAL];
+import {AlertRuleAggregations, IncidentRule, TimeWindow} from '../types';
+import getMetricDisplayName from '../utils/getMetricDisplayName';
 
 type Props = {
   api: Client;
   config: Config;
   organization: Organization;
-
-  // List of Projects
-  projects: Project[];
-
-  initialData?: IncidentRule;
-
-  // Form model for the rule
-  model: FormModel;
+  rule?: IncidentRule;
 };
 
 type TimeWindowMapType = {[key in TimeWindow]: string};
@@ -48,46 +31,12 @@ const TIME_WINDOW_MAP: TimeWindowMapType = {
   [TimeWindow.ONE_DAY]: t('24 hours'),
 };
 
-type ObservableTriggersChartProps = {
-  api: Client;
-  config: Config;
-  organization: Organization;
-  // List of Projects
-  projects: Project[];
-
-  model: FormModel;
-};
-
-const ObservableTriggersChart = ({model, ...props}: ObservableTriggersChartProps) => {
-  return (
-    <Observer>
-      {() => (
-        <TriggersChart
-          {...props}
-          query={model.getValue('query') as string}
-          timeWindow={model.getValue('timeWindow') as number}
-          aggregations={
-            (model.getValue('aggregations') as unknown) as AlertRuleAggregations[]
-          }
-        />
-      )}
-    </Observer>
-  );
-};
 class RuleForm extends React.Component<Props> {
   render() {
-    const {api, config, model, projects, organization} = this.props;
+    const {organization} = this.props;
 
     return (
       <React.Fragment>
-        <ObservableTriggersChart
-          api={api}
-          config={config}
-          organization={organization}
-          projects={projects}
-          model={model}
-        />
-
         <JsonForm
           forms={[
             {
@@ -165,56 +114,4 @@ class RuleForm extends React.Component<Props> {
   }
 }
 
-type RuleFormContainerProps = {
-  initialData?: IncidentRule;
-  orgId: string;
-  incidentRuleId?: string;
-  saveOnBlur?: boolean;
-} & Pick<React.ComponentProps<typeof RuleForm>, 'api' | 'config' | 'organization'> & {
-    onSubmitSuccess?: Form['props']['onSubmitSuccess'];
-  };
-
-class RuleFormContainer extends React.Component<RuleFormContainerProps> {
-  static contextTypes = {
-    project: SentryTypes.Project,
-  };
-
-  render() {
-    const {
-      orgId,
-      incidentRuleId,
-      initialData,
-      saveOnBlur,
-      onSubmitSuccess,
-      ...props
-    } = this.props;
-    return (
-      <Form
-        apiMethod={incidentRuleId ? 'PUT' : 'POST'}
-        apiEndpoint={`/organizations/${orgId}/alert-rules/${
-          incidentRuleId ? `${incidentRuleId}/` : ''
-        }`}
-        initialData={{
-          query: '',
-          aggregations: DEFAULT_METRIC,
-          timeWindow: 60,
-          ...initialData,
-        }}
-        saveOnBlur={saveOnBlur}
-        onSubmitSuccess={onSubmitSuccess}
-      >
-        {({model}) => (
-          <RuleForm
-            model={model}
-            initialData={initialData}
-            projects={[this.context.project]}
-            {...props}
-          />
-        )}
-      </Form>
-    );
-  }
-}
-
-export {RuleFormContainer};
-export default withConfig(withApi(withOrganization(RuleFormContainer)));
+export default RuleForm;

@@ -8,16 +8,21 @@ import {Organization} from 'app/types';
 import {t} from 'app/locale';
 import {extractAnalyticsQueryFields} from 'app/utils';
 import {trackAnalyticsEvent} from 'app/utils/analytics';
-import {createSavedQuery} from 'app/actionCreators/discoverSavedQueries';
+import withApi from 'app/utils/withApi';
+
+import {
+  createSavedQuery,
+  // updateSavedQuery,
+} from 'app/actionCreators/discoverSavedQueries';
 import {addSuccessMessage} from 'app/actionCreators/indicator';
+import {SavedQuery} from 'app/stores/discoverSavedQueriesStore';
+
 import DropdownControl from 'app/components/dropdownControl';
 import DropdownButton from 'app/components/dropdownButton';
 import Button from 'app/components/button';
 import Input from 'app/components/forms/input';
 import InlineSvg from 'app/components/inlineSvg';
 import space from 'app/styles/space';
-import withApi from 'app/utils/withApi';
-import {SavedQuery} from 'app/stores/discoverSavedQueriesStore';
 
 import EventView from './eventView';
 

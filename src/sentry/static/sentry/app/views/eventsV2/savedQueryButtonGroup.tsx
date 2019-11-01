@@ -3,21 +3,27 @@ import {Location} from 'history';
 import styled from 'react-emotion';
 import {browserHistory} from 'react-router';
 
-import space from 'app/styles/space';
 import {Client} from 'app/api';
 import {t} from 'app/locale';
+import {Organization} from 'app/types';
 import {extractAnalyticsQueryFields} from 'app/utils';
 import {trackAnalyticsEvent} from 'app/utils/analytics';
-import Button from 'app/components/button';
-import {Organization} from 'app/types';
+import withApi from 'app/utils/withApi';
+import withDiscoverSavedQueries from 'app/utils/withDiscoverSavedQueries';
+
 import {
   deleteSavedQuery,
   updateSavedQuery,
 } from 'app/actionCreators/discoverSavedQueries';
-import {SavedQuery} from 'app/stores/discoverSavedQueriesStore';
-import withApi from 'app/utils/withApi';
-import withDiscoverSavedQueries from 'app/utils/withDiscoverSavedQueries';
 import {addSuccessMessage} from 'app/actionCreators/indicator';
+import {SavedQuery} from 'app/stores/discoverSavedQueriesStore';
+
+import Button from 'app/components/button';
+import DropdownButton from 'app/components/dropdownButton';
+import DropdownControl from 'app/components/dropdownControl';
+import InlineSvg from 'app/components/inlineSvg';
+import Input from 'app/components/forms/input';
+import space from 'app/styles/space';
 
 import EventView from './eventView';
 import EventsSaveQueryButton from './saveQueryButton';
@@ -30,10 +36,35 @@ type Props = {
   savedQueries: SavedQuery[];
 };
 
-class SavedQueryButtonGroup extends React.Component<Props> {
-  getExistingSavedQuery = (): EventView | undefined => {
-    const {savedQueries, eventView} = this.props;
+type State = {
+  isNewQuery: boolean;
+  isEditingQuery: boolean;
+};
 
+class SavedQueryButtonGroup extends React.Component<Props> {
+  static getDerivedStateFromProps(nextProps: Props, prevState: State): Partial<State> {
+    const {eventView, savedQueries} = nextProps;
+    console.log(prevState, savedQueries);
+
+    const savedQuery = savedQueries.find(q => q.id === eventView.id);
+
+    return {
+      isNewQuery: !!savedQuery,
+      // isEditingQuery: !!SavedQueryButtonGroup.getExistingSavedQuery() && hasValidId,
+    };
+  }
+
+  static getSavedQueryFromStore(
+    eventView: EventView,
+    savedQueries: SavedQuery[]
+  ): SavedQuery | undefined {
+    return savedQueries.find(q => q.id === eventView.id);
+  }
+
+  static getExistingSavedQuery = (
+    eventView: EventView,
+    savedQueries: SavedQuery[]
+  ): EventView | undefined => {
     const index = savedQueries.findIndex(needle => {
       return needle.id === eventView.id;
     });
@@ -42,17 +73,20 @@ class SavedQueryButtonGroup extends React.Component<Props> {
       return undefined;
     }
 
-    const savedQuery = savedQueries[index];
+    return EventView.fromSavedQuery(savedQueries[index]);
+  };
 
-    return EventView.fromSavedQuery(savedQuery);
+  state = {
+    isNewQuery: false,
+    isEditingQuery: false,
   };
 
   isEditingExistingQuery = (): boolean => {
-    const {eventView} = this.props;
+    // const {eventView} = this.props;
+    // const isValidId = typeof eventView.id === 'string';
 
-    const isValidId = typeof eventView.id === 'string';
-
-    return !!this.getExistingSavedQuery() && isValidId;
+    // return !!this.getExistingSavedQuery() && isValidId;
+    return true;
   };
 
   deleteQuery = (event: React.MouseEvent<Element>) => {
@@ -101,14 +135,6 @@ class SavedQueryButtonGroup extends React.Component<Props> {
       });
   };
 
-  renderDeleteButton = () => {
-    if (!this.isEditingExistingQuery()) {
-      return null;
-    }
-
-    return <Button icon="icon-trash" onClick={this.deleteQuery} />;
-  };
-
   handleSaveQuery = (event: React.MouseEvent<Element>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -154,15 +180,16 @@ class SavedQueryButtonGroup extends React.Component<Props> {
   };
 
   isQueryModified = (): boolean => {
-    const previousSavedQuery = this.getExistingSavedQuery();
+    // const previousSavedQuery = this.getExistingSavedQuery();
 
-    if (!previousSavedQuery) {
-      return false;
-    }
+    // if (!previousSavedQuery) {
+    //   return false;
+    // }
 
-    const {eventView} = this.props;
+    // const {eventView} = this.props;
 
-    return !eventView.isEqualTo(previousSavedQuery);
+    // return !eventView.isEqualTo(previousSavedQuery);
+    return true;
   };
 
   renderSaveButton = () => {
@@ -177,12 +204,86 @@ class SavedQueryButtonGroup extends React.Component<Props> {
     );
   };
 
+  renderButtonDelete = () => {
+    if (!this.isEditingExistingQuery()) {
+      return null;
+    }
+
+    return <Button icon="icon-trash" onClick={this.deleteQuery} />;
+  };
+
+  renderButtonSaveAs() {
+    // const queryName = this.props;
+    const {isNewQuery} = this.state;
+
+    // console.log('renderButtonSaveAs', this.props.queryName);
+
+    return (
+      <DropdownControl
+        alignRight
+        menuWidth="220px"
+        button={({isOpen, getActorProps}) => (
+          <ButtonSave
+            {...getActorProps({isStyled: true})}
+            isOpen={isOpen}
+            showChevron={false}
+          >
+            <ButtonSaveIcon
+              isNewQuery={isNewQuery}
+              src="icon-star-small-filled"
+              size="14"
+            />
+            {t('Save as...')}
+          </ButtonSave>
+        )}
+      >
+        <ButtonSaveDropDown
+        // onClick={this.stopEventPropagation}
+        >
+          <ButtonSaveInput
+            type="text"
+            placeholder={t('Display name')}
+            // value={this.state.queryName}
+            // onBlur={this.handleInputBlur}
+            // onChange={this.handleInputChange}
+          />
+          <Button
+            // onClick={this.handleSave}
+            priority="primary"
+            style={{width: '100%'}}
+          >
+            {t('Save')}
+          </Button>
+        </ButtonSaveDropDown>
+      </DropdownControl>
+    );
+  }
+
+  renderButtonSaved() {
+    const {isNewQuery} = this.state;
+
+    return (
+      <Button onClick={undefined}>
+        <ButtonSaveIcon isNewQuery={isNewQuery} src="icon-star-small-filled" size="14" />
+        {t('Saved query')}
+      </Button>
+    );
+  }
+
+  renderButtonUpdate() {
+    return (
+      <Button>
+        <ButtonUpdateIcon onClick={undefined} />
+        {t('Update query')}
+      </Button>
+    );
+  }
+
   render() {
     const {location, organization, eventView, savedQueries} = this.props;
 
     return (
       <ButtonGroup>
-        {this.renderDeleteButton()}
         <EventsSaveQueryButton
           location={location}
           organization={organization}
@@ -190,7 +291,10 @@ class SavedQueryButtonGroup extends React.Component<Props> {
           savedQueries={savedQueries}
           isEditingExistingQuery={this.isEditingExistingQuery()}
         />
-        {this.renderSaveButton()}
+        {this.renderButtonDelete()}
+        {this.renderButtonSaveAs()}
+        {this.renderButtonUpdate()}
+        {this.renderButtonSaved()}
       </ButtonGroup>
     );
   }
@@ -198,10 +302,39 @@ class SavedQueryButtonGroup extends React.Component<Props> {
 
 const ButtonGroup = styled('div')`
   display: flex;
+  align-items: center;
 
   > * + * {
     margin-left: ${space(1)};
   }
+`;
+
+const ButtonSave = styled(DropdownButton)`
+  z-index: ${p => p.theme.zIndex.dropdownAutocomplete.actor};
+  white-space: nowrap;
+`;
+const ButtonSaveIcon = styled(InlineSvg)<{isNewQuery?: boolean}>`
+  margin-top: -3px; /* Align SVG vertically to text */
+  margin-right: ${space(0.75)};
+
+  color: ${p => (p.isNewQuery ? p.theme.yellow : '#c4c4c4')};
+`;
+const ButtonSaveDropDown = styled('li')`
+  padding: ${space(1)};
+`;
+const ButtonSaveInput = styled(Input)`
+  width: 100%;
+  margin-bottom: ${space(1)};
+`;
+
+const ButtonUpdateIcon = styled('div')`
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+
+  margin-right: ${space(0.75)};
+  border-radius: 5px;
+  background-color: ${p => p.theme.yellow};
 `;
 
 export default withApi(withDiscoverSavedQueries(SavedQueryButtonGroup));
